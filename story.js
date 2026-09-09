@@ -1,0 +1,15 @@
+const $=s=>document.querySelector(s), sections=[...document.querySelectorAll('section')], copies=[...document.querySelectorAll('.copy')], dots=[...document.querySelectorAll('nav button')];
+const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v)), mix=(a,b,t)=>a+(b-a)*t, smooth=t=>{t=clamp(t);return t*t*(3-2*t)};
+const plant=$('.plant-wrap'),seed=$('.seed'),kernel=$('.kernel'),pack=$('.pack');
+const particles=Array.from({length:26},(_,i)=>{const img=new Image();img.src='assets/kernel.png';img.alt='';$('.burst').append(img);return {el:img,a:i*2.39996,r:180+(i%5)*70}});
+const names=['THE SEED','TAKING ROOT','THE GROWTH','THE KERNEL','THE POTENTIAL','PIONEER'];
+let target=0,current=0;const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+function read(){target=scrollY/sections[1].offsetTop}addEventListener('scroll',read,{passive:true});addEventListener('resize',read);
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>sections[+b.dataset.go].scrollIntoView({behavior:reduced?'instant':'smooth'})));
+function draw(){current=reduced?target:mix(current,target,.085);const p=current,mobile=innerWidth<=700;copies.forEach((c,i)=>{const o=i===0?1-smooth((p-.55)/.35):smooth((p-i+.3)/.3)*(i===5?1:1-smooth((p-i-.55)/.35));c.style.opacity=o;c.inert=o<.05;c.style.transform=`translateY(${(1-o)*24}px)`});
+const index=clamp(Math.floor(p+.3),0,5);dots.forEach((d,i)=>{d.classList.toggle('active',i===index);d.setAttribute('aria-current',i===index?'step':'false')});$('#chapter-name').textContent=names[index];$('#number').textContent=String(index+1).padStart(2,'0');
+const bury=smooth(p/.85);seed.style.opacity=1-smooth((p-.67)/.25);seed.style.transform=`translateY(${bury*(mobile?110:240)}px) rotate(${mix(-28,25,bury)}deg) scale(${mix(1,.38,bury)})`;
+const growth=smooth((p-.72)/1.5),fade=1-smooth((p-2.58)/.35);plant.style.opacity=fade;plant.style.clipPath=`inset(${mix(78,0,growth)}% 0 0 0)`;plant.style.transform=`scale(${mix(.45,1,growth)}) rotate(${Math.sin(p)*1.5}deg)`;
+const explosion=smooth((p-2.65)/.65);particles.forEach(({el,a,r},i)=>{el.style.opacity=Math.sin(explosion*Math.PI)*.85;el.style.transform=`translate(${Math.cos(a)*r*explosion}px,${Math.sin(a)*r*explosion}px) rotate(${i*19+explosion*180}deg) scale(${mix(.15,1,explosion)})`});
+const close=smooth((p-2.7)/.48),turn=smooth((p-3.63)/.55),out=smooth((p-4.65)/.35);kernel.style.opacity=close*(1-out);kernel.style.transform=`translateX(${mix(0,mobile?0:-innerWidth*.36,turn)}px) translateY(${reduced?0:Math.sin(p*5)*9}px) rotate(${mix(-20,32,turn)}deg) scale(${mix(.15,1,close)}) scaleX(${1-Math.sin(turn*Math.PI)*.72})`;
+pack.style.opacity=smooth((p-4.65)/.35);pack.style.transform=`translateY(${mix(65,0,smooth((p-4.65)/.35))}px) rotate(${mix(7,-4,smooth((p-4.65)/.35))}deg)`;requestAnimationFrame(draw)}read();draw();
